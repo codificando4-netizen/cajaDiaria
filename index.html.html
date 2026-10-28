@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Caja Diaria</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    :root {
+      --bg: #F2F5F3; --surface: #FFFFFF; --ink: #13201B; --muted: #5B6862; --line: #D8E0DB;
+      --venta: #0C7A58; --venta-soft: #DDF1E9; --gasto: #B5382A; --gasto-soft: #F8E2DE;
+      --on-tone: #FFFFFF; --font-display: 'Bricolage Grotesque', sans-serif;
+      --font-body: 'IBM Plex Sans', sans-serif; --font-mono: 'IBM Plex Mono', monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0F1613; --surface: #18221D; --ink: #E7EFEA; --muted: #97A59E; --line: #2A3730;
+        --venta: #4CC9A0; --venta-soft: #173A2E; --gasto: #F08A7A; --gasto-soft: #40201B;
+        --on-tone: #0B1410; color-scheme: dark;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; margin: 0; padding: 20px 16px 56px; }
+    .wrap { max-width: 560px; margin: 0 auto; display: grid; gap: 16px; }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    h1 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 30px; }
+    .sub { margin: 0; color: var(--muted); font-size: 14px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+    .monthnav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .monthnav h2 { margin: 0; font-family: var(--font-display); font-size: 17px; flex: 1; text-align: center; }
+    .nav { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: transparent; font-size: 20px; }
+    .balance { margin-top: 8px; display: grid; gap: 2px; }
+    .label { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+    .big { font-family: var(--font-mono); font-weight: 600; font-size: 34px; }
+    .pair { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .cell { border-radius: 10px; padding: 10px 12px; }
+    .cell.v { background: var(--venta-soft); } .cell.g { background: var(--gasto-soft); }
+    .cell .amt { font-family: var(--font-mono); font-weight: 600; font-size: 18px; }
+    .cell.v .amt { color: var(--venta); } .cell.g .amt { color: var(--gasto); }
+    form { --tone: var(--venta); --tone-soft: var(--venta-soft); display: grid; gap: 14px; }
+    form[data-tipo="gasto"] { --tone: var(--gasto); --tone-soft: var(--gasto-soft); }
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .seg button { height: 44px; border-radius: 10px; border: 1px solid var(--line); background: transparent; font-weight: 600; }
+    .seg button[aria-checked="true"] { background: var(--tone); border-color: var(--tone); color: var(--on-tone); }
+    .field { display: grid; gap: 6px; }
+    .field > span { font-size: 13px; color: var(--muted); }
+    input, select { width: 100%; height: 46px; padding: 0 12px; font-size: 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+    input#monto { height: 56px; font-family: var(--font-mono); font-weight: 600; font-size: 24px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; }
+    .chips.metodo .chip[aria-pressed="true"] { background: var(--tone-soft); border-color: var(--tone); font-weight: 600; }
+    .submit { height: 48px; border: 0; border-radius: 10px; background: var(--tone); color: var(--on-tone); font-weight: 600; font-size: 16px; }
+    .submit:disabled { opacity: 0.55; cursor: not-allowed; }
+    .msg { margin: 0; font-size: 13.5px; color: var(--gasto); }
+    .groups { display: grid; gap: 14px; margin-top: 12px; }
+    .items { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .item { display: grid; grid-template-columns: 1fr auto; padding: 12px 14px; gap: 4px; }
+    .item + .item { border-top: 1px solid var(--line); }
+    .item .t { font-weight: 500; }
+    .item .m { font-size: 13px; color: var(--muted); }
+    .item .a { font-family: var(--font-mono); font-weight: 600; text-align: right; }
+    .item .a.v { color: var(--venta); } .item .a.g { color: var(--gasto); }
+    .toast { position: fixed; left: 0; right: 0; bottom: 16px; display: flex; justify-content: center; pointer-events: none; }
+    .toast span { background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<main class="wrap">
+  <header class="top">
+    <h1>Caja Diaria</h1>
+    <p class="sub">Registro de ventas y gastos en Google Sheets</p>
+  </header>
+
+  <section class="card">
+    <div class="monthnav">
+      <button type="button" class="nav" id="prev">&#8249;</button>
+      <h2 id="monthlabel">Cargando...</h2>
+      <button type="button" class="nav" id="next">&#8250;</button>
+    </div>
+    <div class="balance">
+      <span class="label">Balance General</span>
+      <span class="big" id="balance">Bs 0,00</span>
+    </div>
+    <div class="pair">
+      <div class="cell v"><span class="label">Ventas</span><div class="amt" id="tv">Bs 0,00</div></div>
+      <div class="cell g"><span class="label">Gastos</span><div class="amt" id="tg">Bs 0,00</div></div>
+    </div>
+  </section>
+
+  <form id="f" class="card" data-tipo="venta" autocomplete="off">
+    <div class="seg">
+      <button type="button" data-tipo="venta" aria-checked="true">Venta</button>
+      <button type="button" data-tipo="gasto" aria-checked="false">Gasto</button>
+    </div>
+    <label class="field"><span>Monto (Bs)</span>
+      <input id="monto" inputmode="decimal" placeholder="0,00" required>
+    </label>
+    <label class="field"><span>Concepto</span>
+      <input id="concepto" placeholder="Ej. Venta del día, pedido cliente">
+    </label>
+    <div class="row2">
+      <label class="field"><span>Categoría</span><select id="categoria"></select></label>
+      <label class="field"><span>Fecha</span><input id="fecha" type="date"></label>
+    </div>
+    <div class="field"><span>Método de pago</span>
+      <div class="chips metodo" id="metodos"></div>
+    </div>
+    <button type="submit" class="submit" id="submit">Registrar venta</button>
+    <p class="msg" id="msg"></p>
+  </form>
+
+  <section>
+    <h2>Movimientos Recientes</h2>
+    <div id="list" class="groups"></div>
+  </section>
+</main>
+
+<div class="toast"><span id="toast" hidden></span></div>
+
+<script>
+(function () {
+  'use strict';
+  
+  var GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZfK_IpV6VmMKlW77SAYIyIqEKG3NvroJjnQ7w4GevBEHa5zMO6qVU844fHZ7LOV_9/exec";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var nf = new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function money(n) { return 'Bs ' + nf.format(n); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function todayStr() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+  var CATS = {
+    venta: ['Productos', 'Servicios', 'Pedidos', 'Otros'],
+    gasto: ['Mercadería e insumos', 'Transporte', 'Alquiler', 'Servicios básicos', 'Publicidad', 'Sueldos', 'Otros']
+  };
+  var METODOS = ['Efectivo', 'QR', 'Transferencia'];
+
+  var state = {
+    tipo: 'venta', metodo: 'Efectivo', mes: todayStr().slice(0, 7),
+    docs: [],
+    busy: false
+  };
+
+  function toast(t) {
+    var n = $('toast'); n.textContent = t; n.hidden = false;
+    setTimeout(function () { n.hidden = true; }, 2500);
+  }
+
+  function renderSummary() {
+    var tv = 0, tg = 0;
+    state.docs.forEach(function (d) {
+      if (d.fecha && d.fecha.slice(0, 7) === state.mes) {
+        if (d.tipo === 'venta') tv += d.monto;
+        else tg += d.monto;
+      }
+    });
+    var bal = tv - tg;
+    $('monthlabel').textContent = state.mes;
+    $('tv').textContent = money(tv);
+    $('tg').textContent = money(tg);
+    $('balance').textContent = (bal < 0 ? '− ' : '') + money(Math.abs(bal));
+  }
+
+  function renderForm() {
+    $('f').setAttribute('data-tipo', state.tipo);
+    document.querySelectorAll('.seg button').forEach(function (b) {
+      b.setAttribute('aria-checked', String(b.getAttribute('data-tipo') === state.tipo));
+    });
+    $('submit').textContent = state.busy ? 'Guardando...' : (state.tipo === 'venta' ? 'Registrar venta' : 'Registrar gasto');
+    $('submit').disabled = state.busy;
+    
+    document.querySelectorAll('#metodos .chip').forEach(function (c) {
+      c.setAttribute('aria-pressed', String(c.getAttribute('data-m') === state.metodo));
+    });
+  }
+
+  function fillCategorias() {
+    var sel = $('categoria'); sel.textContent = '';
+    CATS[state.tipo].forEach(function (c) {
+      var o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o);
+    });
+  }
+
+  function renderList() {
+    var box = $('list'); box.textContent = '';
+    var items = state.docs.filter(function (d) { return d.fecha && d.fecha.slice(0, 7) === state.mes; });
+    
+    if (!items.length) {
+      box.innerHTML = '<div style="color:var(--muted); text-align:center; padding:20px;">Sin movimientos este mes.</div>';
+      return;
+    }
+
+    var wrap = document.createElement('div'); wrap.className = 'items';
+    items.slice().reverse().forEach(function (d) {
+      var row = document.createElement('div'); row.className = 'item';
+      row.innerHTML = '<div><div class="t">' + (d.concepto || d.categoria) + '</div><div class="m">' + d.categoria + ' · ' + d.metodo + ' · ' + d.fecha + '</div></div>' +
+                      '<div class="a ' + (d.tipo === 'venta' ? 'v' : 'g') + '">' + (d.tipo === 'venta' ? '+ ' : '− ') + money(d.monto) + '</div>';
+      wrap.appendChild(row);
+    });
+    box.appendChild(wrap);
+  }
+
+  function render() { renderSummary(); renderForm(); renderList(); }
+
+  // Carga los datos desde Google Sheets cada vez que abres la página
+  async function loadFromGoogleSheets() {
+    try {
+      var res = await fetch(GOOGLE_SCRIPT_URL);
+      if (res.ok) {
+        state.docs = await res.json();
+        render();
+      }
+    } catch (e) {
+      console.error("Error al cargar registros:", e);
+    }
+  }
+
+  async function submit(ev) {
+    ev.preventDefault();
+    var monto = parseFloat($('monto').value.replace(',', '.'));
+    if (isNaN(monto) || monto <= 0) { $('msg').textContent = 'Escribe un monto válido.'; return; }
+    $('msg').textContent = '';
+
+    var doc = {
+      tipo: state.tipo,
+      monto: monto,
+      concepto: $('concepto').value.trim(),
+      categoria: $('categoria').value,
+      metodo: state.metodo,
+      fecha: $('fecha').value || todayStr()
+    };
+
+    state.busy = true; renderForm();
+
+    try {
+      // Envía a Google Sheets
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(doc)
+      });
+
+      // Muestra inmediatamente en pantalla
+      state.docs.push(doc);
+      $('monto').value = ''; $('concepto').value = '';
+      toast('Registrado correctamente');
+      
+      // Sincroniza nuevamente pasados 2 segundos
+      setTimeout(loadFromGoogleSheets, 2000);
+    } catch (e) {
+      $('msg').textContent = 'Error al guardar en Google Sheets.';
+    } finally {
+      state.busy = false; render();
+    }
+  }
+
+  $('prev').addEventListener('click', function() {
+    var parts = state.mes.split('-');
+    var d = new Date(parts[0], parts[1] - 2, 1);
+    state.mes = d.getFullYear() + '-' + pad(d.getMonth() + 1);
+    render();
+  });
+
+  $('next').addEventListener('click', function() {
+    var parts = state.mes.split('-');
+    var d = new Date(parts[0], parts[1], 1);
+    state.mes = d.getFullYear() + '-' + pad(d.getMonth() + 1);
+    render();
+  });
+
+  document.querySelector('.seg').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return;
+    state.tipo = b.getAttribute('data-tipo'); fillCategorias(); renderForm();
+  });
+
+  var mw = $('metodos');
+  METODOS.forEach(function (m) {
+    var c = document.createElement('button'); c.type = 'button'; c.className = 'chip';
+    c.setAttribute('data-m', m); c.textContent = m; mw.appendChild(c);
+  });
+  mw.addEventListener('click', function (ev) {
+    var c = ev.target.closest('.chip'); if (!c) return;
+    state.metodo = c.getAttribute('data-m'); renderForm();
+  });
+
+  $('f').addEventListener('submit', submit);
+  $('fecha').value = todayStr();
+  fillCategorias();
+  render();
+  
+  // Carga inicial
+  loadFromGoogleSheets();
+})();
+</script>
+</body>
+</html>
